@@ -74,7 +74,8 @@ export function PartyForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Generation failed");
-      router.push(`/plan/${data.id}`);
+      sessionStorage.setItem("bydes_plan", JSON.stringify(data));
+      router.push("/plan");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
