@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "By Des",
+    "tagline": "מסיבות מושלמות, מ-A ועד Z"
+  },
+  "intro": {
+    "surprise_title": "הפתעה בשבילך, Des",
+    "surprise_message": "[הודעה אישית מהמשפחה — יושלם בקרוב]",
+    "cta": "כנסי לעולם שלך ✨"
+  },
+  "form": {
+    "heading": "ספרי לנו על המסיבה",
+    "subheading": "ונבנה לך תוכנית מושלמת",
+    "required_section": "פרטי הבסיס",
+    "optional_section": "רוצה להוסיף עוד פרטים?",
+    "optional_toggle_open": "פרטים נוספים (אופציונלי)",
+    "optional_toggle_close": "פחות פרטים",
+    "theme_label": "מה הנושא?",
+    "theme_placeholder": "לדוגמה: ג׳ונגל, נסיכות, Unicorn...",
+    "theme_suggestions": ["ים", "ג'ונגל", "נסיכות", "Unicorn", "חלל", "דינוזאורים", "Retro 90s", "ספארי", "קרקס", "אמנות", "בועות", "כדורגל"],
+    "kid_name_label": "שם הילד/ה",
+    "kid_name_placeholder": "שם",
+    "kid_age_label": "גיל",
+    "kid_age_placeholder": "גיל",
+    "guests_label": "כמה אורחים?",
+    "guests_placeholder": "מספר אורחים",
+    "budget_label": "תקציב",
+    "budget_options": {
+      "low": "חסכוני",
+      "medium": "רגיל",
+      "high": "מיוחד",
+      "premium": "פרימיום"
+    },
+    "budget_ranges": {
+      "low": "300–600 ₪",
+      "medium": "600–1,200 ₪",
+      "high": "1,200–2,500 ₪",
+      "premium": "2,500 ₪+"
+    },
+    "date_label": "תאריך המסיבה",
+    "venue_label": "איפה המסיבה?",
+    "venue_options": ["בית", "אולם", "גינה", "חוף ים", "פארק"],
+    "vibe_label": "איזה ויב?",
+    "vibe_options": ["DIY ידידותי", "בדקה ה-90", "מיוחד במיוחד", "אקולוגי", "חינוכי", "חיצוני", "מינימליסטי", "צבעוני"],
+    "style_label": "סגנון",
+    "style_options": ["אלגנטי", "צבעוני", "מינימליסטי", "בוהו", "Retro", "ילדותי"],
+    "gender_label": "העדפת צבע / מגדר",
+    "gender_options": ["בנות", "בנים", "ניטרלי"],
+    "food_label": "הערות לאוכל / אלרגיות",
+    "food_placeholder": "ללא גלוטן, צמחוני, ללא אגוזים...",
+    "party_lang_label": "שפות במסיבה",
+    "party_lang_options": ["עברית", "מעורב", "אנגלית"],
+    "have_label": "מה כבר יש?",
+    "have_placeholder": "שולחנות, כיסאות, מפות...",
+    "notes_label": "הערות נוספות",
+    "notes_placeholder": "כל דבר אחר שחשוב לדעת...",
+    "submit": "תיצרי לי תוכנית! 🎉",
+    "submitting": "Des בונה לך את המסיבה המושלמת..."
+  },
+  "loading": {
+    "title": "בונה לך את המסיבה המושלמת...",
+    "steps": [
+      "מנתחת את הנושא...",
+      "בוחרת דקורציה מושלמת...",
+      "מחפשת מוצרים שישלחו לישראל...",
+      "מתכננת פעילויות שילדים יאהבו...",
+      "מוסיפה את המגע האישי של Des...",
+      "מסיימת את התוכנית..."
+    ]
+  },
+  "plan": {
+    "title": "התוכנית שלך",
+    "for": "עבור",
+    "guests": "אורחים",
+    "share": "שתפי עם לקוחה",
+    "share_copied": "הקישור הועתק!",
+    "new_plan": "תוכנית חדשה",
+    "tier_basic": "בסיסי",
+    "tier_special": "מיוחד",
+    "tier_wow": "WOW ✨",
+    "des_touch": "הטאץ׳ של Des",
+    "decor": "דקורציה",
+    "cake": "עוגה",
+    "activities": "פעילויות",
+    "shopping": "קניות",
+    "design": "עיצוב",
+    "local_stores": "חנויות מקומיות",
+    "online": "קנייה אונליין",
+    "amazon": "Amazon IL",
+    "aliexpress": "AliExpress → ישראל",
+    "estimated_cost": "עלות משוערת",
+    "search_on": "חיפוש ב"
+  },
+  "header": {
+    "lang_he": "עב",
+    "lang_en": "EN"
+  }
+}

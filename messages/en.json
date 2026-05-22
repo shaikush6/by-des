@@ -1,0 +1,98 @@
+{
+  "app": {
+    "name": "By Des",
+    "tagline": "Perfect parties, from A to Z"
+  },
+  "intro": {
+    "surprise_title": "A Surprise for You, Des",
+    "surprise_message": "[Personal message from the family — coming soon]",
+    "cta": "Enter Your World ✨"
+  },
+  "form": {
+    "heading": "Tell Us About the Party",
+    "subheading": "We'll build you a perfect plan",
+    "required_section": "The Basics",
+    "optional_section": "Want to add more details?",
+    "optional_toggle_open": "More details (optional)",
+    "optional_toggle_close": "Less details",
+    "theme_label": "What's the theme?",
+    "theme_placeholder": "e.g. Jungle, Princess, Unicorn...",
+    "theme_suggestions": ["Beach", "Jungle", "Princess", "Unicorn", "Space", "Dinosaurs", "Retro 90s", "Safari", "Circus", "Art", "Bubbles", "Football"],
+    "kid_name_label": "Child's Name",
+    "kid_name_placeholder": "Name",
+    "kid_age_label": "Age",
+    "kid_age_placeholder": "Age",
+    "guests_label": "How many guests?",
+    "guests_placeholder": "Number of guests",
+    "budget_label": "Budget",
+    "budget_options": {
+      "low": "Budget",
+      "medium": "Standard",
+      "high": "Special",
+      "premium": "Premium"
+    },
+    "budget_ranges": {
+      "low": "₪300–600",
+      "medium": "₪600–1,200",
+      "high": "₪1,200–2,500",
+      "premium": "₪2,500+"
+    },
+    "date_label": "Party Date",
+    "venue_label": "Where is the party?",
+    "venue_options": ["Home", "Event Hall", "Garden", "Beach", "Park"],
+    "vibe_label": "What's the vibe?",
+    "vibe_options": ["DIY-friendly", "Last Minute", "Extra WOW", "Eco", "Educational", "Outdoor", "Minimalist", "Colorful"],
+    "style_label": "Style",
+    "style_options": ["Elegant", "Colorful", "Minimalist", "Boho", "Retro", "Playful"],
+    "gender_label": "Color / Gender preference",
+    "gender_options": ["Girls", "Boys", "Neutral"],
+    "food_label": "Food notes / Allergies",
+    "food_placeholder": "Gluten-free, vegetarian, nut-free...",
+    "party_lang_label": "Party language(s)",
+    "party_lang_options": ["Hebrew", "Mixed", "English"],
+    "have_label": "What do you already have?",
+    "have_placeholder": "Tables, chairs, tablecloths...",
+    "notes_label": "Additional notes",
+    "notes_placeholder": "Anything else we should know...",
+    "submit": "Build My Party Plan! 🎉",
+    "submitting": "Des is crafting your perfect party..."
+  },
+  "loading": {
+    "title": "Crafting your perfect party...",
+    "steps": [
+      "Analyzing the theme...",
+      "Selecting perfect decorations...",
+      "Finding products that ship to Israel...",
+      "Planning activities kids will love...",
+      "Adding Des's personal touch...",
+      "Finalizing the plan..."
+    ]
+  },
+  "plan": {
+    "title": "Your Plan",
+    "for": "for",
+    "guests": "guests",
+    "share": "Share with a client",
+    "share_copied": "Link copied!",
+    "new_plan": "New Plan",
+    "tier_basic": "Basic",
+    "tier_special": "Special",
+    "tier_wow": "WOW ✨",
+    "des_touch": "The Des Touch",
+    "decor": "Decor",
+    "cake": "Cake",
+    "activities": "Activities",
+    "shopping": "Shopping",
+    "design": "Design",
+    "local_stores": "Local Stores",
+    "online": "Buy Online",
+    "amazon": "Amazon IL",
+    "aliexpress": "AliExpress → Israel",
+    "estimated_cost": "Estimated Cost",
+    "search_on": "Search on"
+  },
+  "header": {
+    "lang_he": "עב",
+    "lang_en": "EN"
+  }
+}
