@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import { PartyBrief, GeneratedPlan, PartyItem } from "./types";
 
 function getClient() {
@@ -86,7 +87,7 @@ export async function generatePartyPlan(
     step = "api_call";
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 6000,
+      max_tokens: 8192,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     });
@@ -100,7 +101,12 @@ export async function generatePartyPlan(
     if (start === -1 || end === -1) throw new Error(`No JSON object found. Response starts: ${raw.slice(0, 120)}`);
 
     step = "parse_json";
-    return JSON.parse(raw.slice(start, end + 1)) as GeneratedPlan;
+    const jsonSlice = raw.slice(start, end + 1);
+    try {
+      return JSON.parse(jsonSlice) as GeneratedPlan;
+    } catch {
+      return JSON.parse(jsonrepair(jsonSlice)) as GeneratedPlan;
+    }
 
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
