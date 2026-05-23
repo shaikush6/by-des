@@ -4,39 +4,14 @@ import { ItemCategory, PartyBrief } from "./types";
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function generateItemList(brief: PartyBrief): Promise<ItemCategory[]> {
-  const prompt = `You are a professional party planner. Generate a comprehensive list of ALL items needed for this party:
-Theme: "${brief.theme}", Age: ${brief.kidAge}, Guests: ${brief.guestsCount}, Budget: ${brief.budgetRange}
+  const prompt = `Party planner: list items for a "${brief.theme}" birthday party, age ${brief.kidAge}, ${brief.guestsCount} guests, ${brief.budgetRange} budget.
 
-Return ONLY valid JSON — no markdown, no explanation — matching this exact structure:
-[
-  {
-    "id": "decor",
-    "emoji": "🎈",
-    "nameHe": "קישוטים",
-    "nameEn": "Decorations",
-    "items": [
-      {
-        "id": "balloons",
-        "emoji": "🎈",
-        "nameHe": "בלונים",
-        "nameEn": "Balloons",
-        "category": "decor",
-        "description": "Theme-colored balloons, mix of regular and foil",
-        "defaultSelected": true
-      }
-    ]
-  }
-]
+Return ONLY a JSON array. No markdown. No explanation. Use this structure exactly:
+[{"id":"decor","emoji":"🎈","nameHe":"קישוטים","nameEn":"Decorations","items":[{"id":"balloons","emoji":"🎈","nameHe":"בלונים","nameEn":"Balloons","category":"decor","description":"theme balloons","defaultSelected":true}]}]
 
-Use these exact category IDs: decor, cake, favors, tableware, activities, design, photo, extras
-
-Rules:
-- Generate 5-8 items per category, all theme-specific to "${brief.theme}"
-- defaultSelected: true for essential items, false for optional/premium ones
-- Emojis must be highly relevant to each specific item
-- nameHe must be natural Hebrew
-- description is English, detailed enough for generating product search terms later
-- Include items across ALL 8 categories`;
+Category IDs (use all 6): decor, cake, favors, tableware, activities, design
+4-6 items per category. Items must be specific to "${brief.theme}" theme.
+defaultSelected:true for essentials, false for extras.`;
 
   const msg = await client.messages.create({
     model: "claude-haiku-4-5-20251001",

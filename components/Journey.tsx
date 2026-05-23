@@ -410,8 +410,9 @@ export function Journey() {
       const defaults = cats.flatMap((c) => c.items.filter((i) => i.defaultSelected));
       setSelectedItems(defaults);
     } catch (err) {
-      console.error(err);
-      setLoadingMessage(isHe ? "משהו השתבש, נסי שוב" : "Something went wrong, please try again");
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[items]", msg);
+      setLoadingMessage(msg || (isHe ? "משהו השתבש, נסי שוב" : "Something went wrong"));
     }
   };
 
@@ -467,7 +468,26 @@ export function Journey() {
   if (phase === "generating") return <LoadingScreen message={loadingMessage} />;
 
   if (phase === "items") {
-    if (!categories.length) return <LoadingScreen message={loadingMessage} />;
+    const isError = loadingMessage.includes("השתבש") || loadingMessage.includes("wrong");
+    if (!categories.length) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-6 px-8 text-center bg-cream">
+          {isError ? (
+            <>
+              <p className="text-charcoal font-medium">{loadingMessage}</p>
+              <button
+                onClick={() => { setPhase("brief"); setStep(4); setLoadingMessage(""); }}
+                className="px-6 py-3 bg-gold text-white rounded-2xl font-medium"
+              >
+                {isHe ? "נסי שוב" : "Try again"}
+              </button>
+            </>
+          ) : (
+            <LoadingScreen message={loadingMessage} />
+          )}
+        </div>
+      );
+    }
     return (
       <ItemPicker
         categories={categories}

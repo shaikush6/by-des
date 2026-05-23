@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateItemList } from "@/lib/items";
 import { PartyBrief } from "@/lib/types";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const categories = await generateItemList(brief);
     return NextResponse.json({ categories });
   } catch (err) {
-    console.error("[items]", err);
-    return NextResponse.json({ error: "Failed to generate items" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[items]", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
