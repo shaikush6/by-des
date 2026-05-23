@@ -1,3 +1,21 @@
+export interface PartyItem {
+  id: string;
+  emoji: string;
+  nameHe: string;
+  nameEn: string;
+  category: string;
+  description: string;
+  defaultSelected: boolean;
+}
+
+export interface ItemCategory {
+  id: string;
+  emoji: string;
+  nameHe: string;
+  nameEn: string;
+  items: PartyItem[];
+}
+
 export interface PartyBrief {
   theme: string;
   kidName: string;

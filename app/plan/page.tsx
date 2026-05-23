@@ -7,10 +7,12 @@ import { PackageCard } from "@/components/PackageCard";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/context/LanguageContext";
 import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 interface PlanSession {
   plan: GeneratedPlan;
   brief: PartyBrief;
+  imageUrl?: string | null;
 }
 
 export default function PlanPage() {
@@ -40,16 +42,13 @@ export default function PlanPage() {
     );
   }
 
-  const { plan, brief } = session;
+  const { plan, brief, imageUrl } = session;
 
   return (
     <div className="min-h-screen bg-cream">
       <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur-sm border-b border-border/50">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <h1
-            className="text-2xl font-heading gold-shimmer"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
+          <h1 className="text-2xl font-heading gold-shimmer" style={{ fontFamily: "var(--font-playfair)" }}>
             By Des
           </h1>
           <LanguageToggle />
@@ -57,6 +56,18 @@ export default function PlanPage() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-20 space-y-6">
+        {/* Moodboard image */}
+        {imageUrl && (
+          <div className="rounded-3xl overflow-hidden shadow-lg shadow-charcoal/10">
+            <img
+              src={imageUrl.startsWith("data:") ? imageUrl : imageUrl}
+              alt={`${plan.theme} party moodboard`}
+              className="w-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Plan header */}
         <div className="text-center space-y-1">
           <h2 className="font-heading text-3xl text-charcoal">{plan.theme}</h2>
           <p className="text-muted-foreground text-sm">
@@ -64,7 +75,8 @@ export default function PlanPage() {
           </p>
         </div>
 
-        <div className="flex items-center justify-start">
+        {/* Back button */}
+        <div>
           <button
             onClick={() => router.push("/")}
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-charcoal transition-colors"
@@ -74,13 +86,10 @@ export default function PlanPage() {
           </button>
         </div>
 
+        {/* Packages */}
         <div className="space-y-4">
           {plan.packages.map((pkg) => (
-            <PackageCard
-              key={pkg.tier}
-              pkg={pkg}
-              isHighlighted={pkg.tier === "special"}
-            />
+            <PackageCard key={pkg.tier} pkg={pkg} isHighlighted={pkg.tier === "special"} />
           ))}
         </div>
       </main>
