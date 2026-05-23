@@ -3,8 +3,8 @@ export interface PartyItem {
   emoji: string;
   nameHe: string;
   nameEn: string;
-  category: string;
-  description: string;
+  category?: string;
+  description?: string;
   defaultSelected: boolean;
 }
 

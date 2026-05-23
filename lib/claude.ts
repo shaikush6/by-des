@@ -15,7 +15,7 @@ export async function generatePartyPlan(
   selectedItems: PartyItem[]
 ): Promise<GeneratedPlan> {
   const isHebrew = brief.language === "he";
-  const itemList = selectedItems.map((i) => `${i.emoji} ${i.nameHe} (${i.description})`).join("\n");
+  const itemList = selectedItems.map((i) => `${i.emoji} ${i.nameHe} / ${i.nameEn}`).join("\n");
 
   const systemPrompt = `You are Des's creative AI assistant — a professional party planning expert for the Israeli market.
 Des is a boutique party planner known for attention to detail and creative themed parties.
