@@ -7,12 +7,10 @@ import { PackageCard } from "@/components/PackageCard";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/context/LanguageContext";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
 
 interface PlanSession {
   plan: GeneratedPlan;
   brief: PartyBrief;
-  imageUrl?: string | null;
 }
 
 export default function PlanPage() {
@@ -20,11 +18,30 @@ export default function PlanPage() {
   const router = useRouter();
   const [session, setSession] = useState<PlanSession | null>(null);
   const [ready, setReady] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("bydes_plan");
     if (raw) {
-      try { setSession(JSON.parse(raw)); } catch { /* ignore */ }
+      try {
+        const parsed = JSON.parse(raw);
+        setSession(parsed);
+        // Fetch image async — non-blocking
+        fetch("/api/image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(parsed.brief),
+        })
+          .then((r) => r.json())
+          .then((data) => setImageUrl(data.imageUrl ?? null))
+          .catch(() => setImageUrl(null))
+          .finally(() => setImageLoading(false));
+      } catch {
+        setImageLoading(false);
+      }
+    } else {
+      setImageLoading(false);
     }
     setReady(true);
   }, []);
@@ -42,7 +59,7 @@ export default function PlanPage() {
     );
   }
 
-  const { plan, brief, imageUrl } = session;
+  const { plan, brief } = session;
 
   return (
     <div className="min-h-screen bg-cream">
@@ -56,16 +73,24 @@ export default function PlanPage() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 pb-20 space-y-6">
-        {/* Moodboard image */}
-        {imageUrl && (
-          <div className="rounded-3xl overflow-hidden shadow-lg shadow-charcoal/10">
-            <img
-              src={imageUrl.startsWith("data:") ? imageUrl : imageUrl}
-              alt={`${plan.theme} party moodboard`}
-              className="w-full object-cover"
-            />
-          </div>
-        )}
+        {/* Moodboard — skeleton while loading, image when ready */}
+        <div className="rounded-3xl overflow-hidden shadow-lg shadow-charcoal/10 bg-muted aspect-square">
+          {imageLoading ? (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-rose-light to-gold-light/30">
+              <div className="relative w-10 h-10">
+                <div className="absolute inset-0 rounded-full border-3 border-gold/30" />
+                <div className="absolute inset-0 rounded-full border-3 border-gold border-t-transparent animate-spin" style={{ borderWidth: 3 }} />
+              </div>
+              <p className="text-sm text-charcoal-light">יוצרת את המוד בורד שלך...</p>
+            </div>
+          ) : imageUrl ? (
+            <img src={imageUrl} alt={`${plan.theme} moodboard`} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-rose-light to-gold-light/30">
+              <p className="text-4xl">🎉</p>
+            </div>
+          )}
+        </div>
 
         {/* Plan header */}
         <div className="text-center space-y-1">
@@ -75,7 +100,6 @@ export default function PlanPage() {
           </p>
         </div>
 
-        {/* Back button */}
         <div>
           <button
             onClick={() => router.push("/")}
@@ -86,7 +110,6 @@ export default function PlanPage() {
           </button>
         </div>
 
-        {/* Packages */}
         <div className="space-y-4">
           {plan.packages.map((pkg) => (
             <PackageCard key={pkg.tier} pkg={pkg} isHighlighted={pkg.tier === "special"} />

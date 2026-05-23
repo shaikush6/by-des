@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generatePartyPlan } from "@/lib/claude";
-import { generatePartyMoodboard } from "@/lib/openai-image";
 import { PartyBrief, PartyItem } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -13,15 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Run plan generation + image generation in parallel
-    const [plan, imageUrl] = await Promise.all([
-      generatePartyPlan(brief, selectedItems),
-      generatePartyMoodboard(brief),
-    ]);
-
-    return NextResponse.json({ plan, imageUrl, brief });
+    const plan = await generatePartyPlan(brief, selectedItems);
+    return NextResponse.json({ plan, brief });
   } catch (err) {
-    console.error("[generate]", err);
+    console.error("[generate]", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: err instanceof Error ? err.message : "Generation failed" }, { status: 500 });
   }
 }

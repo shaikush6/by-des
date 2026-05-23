@@ -458,7 +458,9 @@ export function Journey() {
       router.push("/plan");
     } catch (err) {
       clearInterval(interval);
-      console.error(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("[generate]", msg);
+      alert(isHe ? `שגיאה: ${msg}` : `Error: ${msg}`);
       setPhase("items");
     }
   };
