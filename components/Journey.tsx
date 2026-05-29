@@ -401,10 +401,17 @@ export function Journey() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(partyBrief),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
 
-      const cats: ItemCategory[] = data.categories;
+      const bodyText = await res.text();
+      let data: { categories?: ItemCategory[]; error?: string } = {};
+      try {
+        data = JSON.parse(bodyText);
+      } catch {
+        throw new Error(isHe ? "הבקשה ארכה יותר מדי, נסי שוב" : "Request took too long, try again");
+      }
+      if (!res.ok) throw new Error(data.error || (isHe ? "משהו השתבש" : "Something went wrong"));
+
+      const cats: ItemCategory[] = data.categories ?? [];
       setCategories(cats);
       // Pre-select default items
       const defaults = cats.flatMap((c) => c.items.filter((i) => i.defaultSelected));
@@ -451,9 +458,22 @@ export function Journey() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ brief: partyBrief, selectedItems }),
       });
-      const data = await res.json();
       clearInterval(interval);
-      if (!res.ok) throw new Error(data.error);
+
+      // The response can be a non-JSON body (e.g. a Vercel timeout/error page
+      // returns "FUNCTION_INVOCATION_TIMEOUT" as plain text). Reading it as text
+      // first avoids res.json() throwing a cryptic SyntaxError on the client.
+      const bodyText = await res.text();
+      let data: { plan?: unknown; brief?: unknown; error?: string } = {};
+      try {
+        data = JSON.parse(bodyText);
+      } catch {
+        throw new Error(
+          isHe ? "ייצור התוכנית ארך יותר מדי. נסי שוב." : "Plan generation took too long. Please try again."
+        );
+      }
+      if (!res.ok) throw new Error(data.error || (isHe ? "משהו השתבש" : "Something went wrong"));
+
       sessionStorage.setItem("bydes_plan", JSON.stringify(data));
       router.push("/plan");
     } catch (err) {
