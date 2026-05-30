@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Heebo } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { ViewProvider } from "@/context/ViewContext";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -38,7 +39,9 @@ export default function RootLayout({
       className={`${playfair.variable} ${heebo.variable} h-full`}
     >
       <body className="min-h-full">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <ViewProvider>{children}</ViewProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

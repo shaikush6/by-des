@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SurpriseIntro } from "@/components/SurpriseIntro";
 import { Journey } from "@/components/Journey";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { ViewToggle } from "@/components/ViewToggle";
 
 export default function HomePage() {
   const [showIntro, setShowIntro] = useState(false);
@@ -21,8 +22,9 @@ export default function HomePage() {
     <>
       {showIntro && <SurpriseIntro onDismiss={() => setShowIntro(false)} />}
 
-      {/* Language toggle — floats over the journey */}
-      <div className="fixed top-4 end-4 z-30">
+      {/* Top-right controls — float over the journey */}
+      <div className="fixed top-4 end-4 z-30 flex items-center gap-2">
+        <ViewToggle />
         <LanguageToggle />
       </div>
 

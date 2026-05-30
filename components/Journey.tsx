@@ -2,11 +2,10 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
+import { useView } from "@/context/ViewContext";
 import { PartyBrief, ItemCategory, PartyItem } from "@/lib/types";
 import { ItemPicker } from "./ItemPicker";
-import { ChevronRight, ChevronLeft } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,301 +24,90 @@ interface BriefState {
   freeNotes: string;
 }
 
-// ─── Step slide animation ─────────────────────────────────────────────────────
+// ─── Field option presets ────────────────────────────────────────────────────
 
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
-  center: { x: 0, opacity: 1 },
-  exit: (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
-};
+const THEMES_HE = ["ים", "ג'ונגל", "נסיכות", "יוניקורן", "חלל", "קרקס", "דינוזאורים", "ספארי"];
+const THEMES_EN = ["Beach", "Jungle", "Princess", "Unicorn", "Space", "Circus", "Dinosaurs", "Safari"];
 
-const transition = { type: "tween" as const, duration: 0.32 };
-
-// ─── Progress dots ────────────────────────────────────────────────────────────
-
-function ProgressDots({ total, current }: { total: number; current: number }) {
-  return (
-    <div className="flex gap-1.5 justify-center">
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          className={`rounded-full transition-all duration-300 ${
-            i === current ? "w-5 h-2 bg-gold" : "w-2 h-2 bg-gold/30"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Step shell ───────────────────────────────────────────────────────────────
-
-function StepShell({
-  step,
-  total,
-  onBack,
-  question,
-  subtext,
-  children,
-  canContinue,
-  onContinue,
-  continueLabel,
-  skipLabel,
-  onSkip,
-}: {
-  step: number;
-  total: number;
-  onBack?: () => void;
-  question: string;
-  subtext?: string;
-  children: React.ReactNode;
-  canContinue: boolean;
-  onContinue: () => void;
-  continueLabel?: string;
-  skipLabel?: string;
-  onSkip?: () => void;
-}) {
-  const { lang } = useLanguage();
-  const isRtl = lang === "he";
-
-  return (
-    <div className="flex flex-col min-h-screen bg-cream px-6 py-8">
-      {/* Top bar */}
-      <div className="flex items-center justify-between mb-6">
-        {onBack ? (
-          <button onClick={onBack} className="p-2 -m-2 text-charcoal-light hover:text-charcoal">
-            {isRtl ? <ChevronLeft size={22} /> : <ChevronRight size={22} />}
-          </button>
-        ) : <div />}
-        <ProgressDots total={total} current={step} />
-        <div className="w-10" />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full gap-8">
-        <div className="space-y-2">
-          <h2 className="font-heading text-3xl text-charcoal leading-tight">{question}</h2>
-          {subtext && <p className="text-muted-foreground text-base">{subtext}</p>}
-        </div>
-        <div>{children}</div>
-      </div>
-
-      {/* Bottom */}
-      <div className="max-w-md mx-auto w-full space-y-3 pt-6">
-        <button
-          onClick={onContinue}
-          disabled={!canContinue}
-          className="w-full py-4 bg-gold text-white font-semibold rounded-2xl text-lg
-                     disabled:opacity-35 disabled:cursor-not-allowed
-                     hover:bg-gold-dark active:scale-[0.98] transition-all duration-200
-                     shadow-md shadow-gold/20"
-        >
-          {continueLabel ?? (isRtl ? "המשיכי ←" : "Continue →")}
-        </button>
-        {skipLabel && onSkip && (
-          <button onClick={onSkip} className="w-full text-sm text-muted-foreground py-2">
-            {skipLabel}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 1: Theme ────────────────────────────────────────────────────────────
-
-const THEMES_HE = ["ים", "ג'ונגל", "נסיכות", "Unicorn", "חלל", "דינוזאורים", "Retro 90s", "ספארי", "קרקס", "אמנות", "כדורגל", "בועות"];
-const THEMES_EN = ["Beach", "Jungle", "Princess", "Unicorn", "Space", "Dinosaurs", "Retro 90s", "Safari", "Circus", "Art", "Football", "Bubbles"];
-
-function Step1Theme({ value, onChange, lang }: { value: string; onChange: (v: string) => void; lang: string }) {
-  const chips = lang === "he" ? THEMES_HE : THEMES_EN;
-  return (
-    <div className="space-y-4">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={lang === "he" ? "לדוגמה: ג׳ונגל, נסיכות, Unicorn..." : "e.g. Jungle, Princess, Unicorn..."}
-        className="w-full px-5 py-4 rounded-2xl border-2 border-border bg-white text-charcoal text-lg
-                   placeholder:text-muted-foreground focus:outline-none focus:border-gold transition-colors"
-        autoFocus
-      />
-      <div className="flex flex-wrap gap-2">
-        {chips.map((chip) => (
-          <button
-            key={chip}
-            type="button"
-            onClick={() => onChange(chip)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200
-              ${value === chip
-                ? "bg-gold text-white border-gold shadow-sm"
-                : "bg-white text-charcoal border-border hover:border-gold hover:text-gold"
-              }`}
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 2: Kid ──────────────────────────────────────────────────────────────
-
-function Step2Kid({
-  name, age, onName, onAge, lang,
-}: { name: string; age: string; onName: (v: string) => void; onAge: (v: string) => void; lang: string }) {
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      <div className="col-span-2">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => onName(e.target.value)}
-          placeholder={lang === "he" ? "שם" : "Name"}
-          className="w-full px-5 py-4 rounded-2xl border-2 border-border bg-white text-charcoal text-lg
-                     placeholder:text-muted-foreground focus:outline-none focus:border-gold transition-colors"
-          autoFocus
-        />
-      </div>
-      <div>
-        <input
-          type="number"
-          value={age}
-          onChange={(e) => onAge(e.target.value)}
-          placeholder={lang === "he" ? "גיל" : "Age"}
-          min="1"
-          max="18"
-          className="w-full px-4 py-4 rounded-2xl border-2 border-border bg-white text-charcoal text-lg text-center
-                     placeholder:text-muted-foreground focus:outline-none focus:border-gold transition-colors"
-        />
-      </div>
-    </div>
-  );
-}
-
-// ─── Step 3: Guests ───────────────────────────────────────────────────────────
-
-function Step3Guests({ value, onChange, lang }: { value: string; onChange: (v: string) => void; lang: string }) {
-  const n = parseInt(value) || 0;
-  return (
-    <div className="flex items-center justify-center gap-6">
-      <button
-        type="button"
-        onClick={() => onChange(String(Math.max(1, n - 5)))}
-        className="w-14 h-14 rounded-full border-2 border-border bg-white text-2xl font-light
-                   hover:border-gold hover:text-gold active:scale-95 transition-all"
-      >
-        −
-      </button>
-      <div className="text-center min-w-[80px]">
-        <span className="font-heading text-5xl text-charcoal">{n || "?"}</span>
-        <p className="text-xs text-muted-foreground mt-1">{lang === "he" ? "אורחים" : "guests"}</p>
-      </div>
-      <button
-        type="button"
-        onClick={() => onChange(String(n + 5))}
-        className="w-14 h-14 rounded-full border-2 border-border bg-white text-2xl font-light
-                   hover:border-gold hover:text-gold active:scale-95 transition-all"
-      >
-        +
-      </button>
-    </div>
-  );
-}
-
-// ─── Step 4: Budget ───────────────────────────────────────────────────────────
+const AGE_CHIPS = ["3", "4", "5", "6", "7", "8", "9", "10"];
+const GUEST_CHIPS = ["10", "20", "30", "50"];
 
 const BUDGET_OPTIONS = [
-  { id: "low", emoji: "💛", he: "חסכוני", en: "Budget", range: "₪300-600" },
-  { id: "medium", emoji: "✨", he: "רגיל", en: "Standard", range: "₪600-1,200" },
-  { id: "high", emoji: "🌟", he: "מיוחד", en: "Special", range: "₪1,200-2,500" },
-  { id: "premium", emoji: "👑", he: "פרימיום", en: "Premium", range: "₪2,500+" },
-];
+  { id: "low",     emoji: "💛", he: "חסכוני",   en: "Budget",   range: "₪300-600" },
+  { id: "medium",  emoji: "✨", he: "רגיל",     en: "Standard", range: "₪600-1,200" },
+  { id: "high",    emoji: "🌟", he: "מיוחד",    en: "Special",  range: "₪1,200-2,500" },
+  { id: "premium", emoji: "👑", he: "פרימיום",  en: "Premium",  range: "₪2,500+" },
+] as const;
 
-function Step4Budget({ value, onChange, onAutoAdvance, lang }: {
-  value: BudgetRange | ""; onChange: (v: BudgetRange) => void; onAutoAdvance: () => void; lang: string;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {BUDGET_OPTIONS.map((opt) => (
-        <button
-          key={opt.id}
-          type="button"
-          onClick={() => { onChange(opt.id as BudgetRange); setTimeout(onAutoAdvance, 220); }}
-          className={`flex flex-col items-center gap-1 py-5 px-3 rounded-2xl border-2 transition-all duration-200
-            ${value === opt.id
-              ? "border-gold bg-gold/10 scale-[1.03] shadow-md shadow-gold/20"
-              : "border-border bg-white hover:border-gold/60"
-            }`}
-        >
-          <span className="text-3xl">{opt.emoji}</span>
-          <span className={`font-semibold text-base ${value === opt.id ? "text-gold" : "text-charcoal"}`}>
-            {lang === "he" ? opt.he : opt.en}
-          </span>
-          <span className="text-xs text-muted-foreground">{opt.range}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// ─── Step 5: Optional ─────────────────────────────────────────────────────────
-
-const VENUE_HE = ["בית", "אולם", "גינה", "חוף ים", "פארק"];
+const VENUE_HE = ["בית", "אולם", "גינה", "חוף", "פארק"];
 const VENUE_EN = ["Home", "Event Hall", "Garden", "Beach", "Park"];
-const STYLE_HE = ["אלגנטי", "צבעוני", "מינימליסטי", "בוהו", "ילדותי"];
-const STYLE_EN = ["Elegant", "Colorful", "Minimalist", "Boho", "Playful"];
-const GENDER_HE = ["בנות 💗", "בנים 💙", "ניטרלי 💛"];
-const GENDER_EN = ["Girls 💗", "Boys 💙", "Neutral 💛"];
+const STYLE_HE = ["אלגנטי", "צבעוני", "מינימליסט", "בוהו", "רטרו"];
+const STYLE_EN = ["Elegant", "Colorful", "Minimalist", "Boho", "Retro"];
 
-function ChipRow({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
+// ─── Small UI helpers ────────────────────────────────────────────────────────
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          type="button"
-          onClick={() => onChange(value === opt ? "" : opt)}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all
-            ${value === opt ? "bg-charcoal text-white border-charcoal" : "bg-white text-charcoal-light border-border hover:border-charcoal/40"}`}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
+    <label className="block text-sm font-semibold text-charcoal mb-2">
+      {children}
+      {required && <span className="text-gold ms-1">*</span>}
+    </label>
   );
 }
 
-function Step5Optional({ state, update, lang }: {
-  state: BriefState; update: (k: keyof BriefState, v: string) => void; lang: string;
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
-  const isHe = lang === "he";
   return (
-    <div className="space-y-5">
-      <div>
-        <p className="text-sm font-medium text-charcoal-light mb-2">{isHe ? "מקום" : "Venue"}</p>
-        <ChipRow options={isHe ? VENUE_HE : VENUE_EN} value={state.venueType} onChange={(v) => update("venueType", v)} />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-charcoal-light mb-2">{isHe ? "סגנון" : "Style"}</p>
-        <ChipRow options={isHe ? STYLE_HE : STYLE_EN} value={state.stylePref} onChange={(v) => update("stylePref", v)} />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-charcoal-light mb-2">{isHe ? "מגדר / צבעים" : "Gender / Colors"}</p>
-        <ChipRow options={isHe ? GENDER_HE : GENDER_EN} value={state.genderPref} onChange={(v) => update("genderPref", v)} />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-charcoal-light mb-2">{isHe ? "הערות" : "Notes"}</p>
-        <textarea
-          value={state.freeNotes}
-          onChange={(e) => update("freeNotes", e.target.value)}
-          placeholder={isHe ? "כל דבר שחשוב לדעת..." : "Anything we should know..."}
-          rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-border bg-white text-charcoal
-                     placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none"
-        />
-      </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all duration-150
+        ${active
+          ? "bg-gold text-white border-gold shadow-sm"
+          : "bg-white text-charcoal border-border hover:border-gold hover:text-gold"
+        }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      {...props}
+      className={`w-full px-4 py-3 rounded-2xl border-2 border-border bg-white text-charcoal text-base
+                  placeholder:text-muted-foreground focus:outline-none focus:border-gold
+                  transition-colors ${props.className ?? ""}`}
+    />
+  );
+}
+
+// ─── Field card wrapper ──────────────────────────────────────────────────────
+
+function FieldCard({
+  title,
+  hint,
+  children,
+  required,
+}: {
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <div className="bg-white/70 backdrop-blur-sm rounded-3xl border border-border/60 p-5 shadow-sm">
+      <FieldLabel required={required}>{title}</FieldLabel>
+      {hint && <p className="text-xs text-muted-foreground mb-3 -mt-1">{hint}</p>}
+      {children}
     </div>
   );
 }
@@ -348,12 +136,12 @@ type Phase = "brief" | "items" | "generating";
 
 export function Journey() {
   const { lang } = useLanguage();
+  const { effective } = useView();
   const router = useRouter();
   const isHe = lang === "he";
+  const isDesktop = effective === "desktop";
 
   const [phase, setPhase] = useState<Phase>("brief");
-  const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(1);
   const [loadingMessage, setLoadingMessage] = useState("");
 
   const [brief, setBrief] = useState<BriefState>({
@@ -363,43 +151,43 @@ export function Journey() {
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [selectedItems, setSelectedItems] = useState<PartyItem[]>([]);
 
-  const updateBrief = useCallback((k: keyof BriefState, v: string) => {
+  const updateBrief = useCallback(<K extends keyof BriefState>(k: K, v: BriefState[K]) => {
     setBrief((b) => ({ ...b, [k]: v }));
   }, []);
 
-  const goTo = (newStep: number) => {
-    setDirection(newStep > step ? 1 : -1);
-    setStep(newStep);
-  };
+  // Required fields: theme, kidName, kidAge, guests, budget
+  const canSubmit =
+    !!brief.theme.trim() &&
+    !!brief.kidName.trim() &&
+    parseInt(brief.kidAge) > 0 &&
+    parseInt(brief.guests) > 0 &&
+    !!brief.budget;
 
-  const canContinue = [
-    !!brief.theme.trim(),
-    !!brief.kidName.trim() && !!brief.kidAge,
-    parseInt(brief.guests) > 0,
-    !!brief.budget,
-    true, // optional step always passable
-  ][step] ?? true;
+  // Build PartyBrief for the API
+  const buildPartyBrief = (): PartyBrief => ({
+    theme: brief.theme,
+    kidName: brief.kidName,
+    kidAge: parseInt(brief.kidAge),
+    guestsCount: parseInt(brief.guests),
+    budgetRange: brief.budget as BudgetRange,
+    language: lang,
+    ...(brief.venueType && { venueType: brief.venueType }),
+    ...(brief.stylePref && { stylePref: brief.stylePref }),
+    ...(brief.genderPref && { genderPref: brief.genderPref }),
+    ...(brief.freeNotes && { freeNotes: brief.freeNotes }),
+  });
 
-  // After completing brief, load items
+  // After completing the brief, load items
   const finishBrief = async () => {
+    if (!canSubmit) return;
     setLoadingMessage(isHe ? "Des מנתחת את המסיבה שלך..." : "Des is analyzing your party...");
     setPhase("items");
-
-    const partyBrief: PartyBrief = {
-      theme: brief.theme, kidName: brief.kidName,
-      kidAge: parseInt(brief.kidAge), guestsCount: parseInt(brief.guests),
-      budgetRange: brief.budget as PartyBrief["budgetRange"], language: lang,
-      ...(brief.venueType && { venueType: brief.venueType }),
-      ...(brief.stylePref && { stylePref: brief.stylePref }),
-      ...(brief.genderPref && { genderPref: brief.genderPref }),
-      ...(brief.freeNotes && { freeNotes: brief.freeNotes }),
-    };
 
     try {
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(partyBrief),
+        body: JSON.stringify(buildPartyBrief()),
       });
 
       const bodyText = await res.text();
@@ -413,21 +201,12 @@ export function Journey() {
 
       const cats: ItemCategory[] = data.categories ?? [];
       setCategories(cats);
-      // Pre-select default items
       const defaults = cats.flatMap((c) => c.items.filter((i) => i.defaultSelected));
       setSelectedItems(defaults);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("[items]", msg);
       setLoadingMessage(msg || (isHe ? "משהו השתבש, נסי שוב" : "Something went wrong"));
-    }
-  };
-
-  const handleNext = () => {
-    if (step < 4) {
-      goTo(step + 1);
-    } else {
-      finishBrief();
     }
   };
 
@@ -442,27 +221,14 @@ export function Journey() {
     setLoadingMessage(msgs[0]);
     const interval = setInterval(() => { i = (i + 1) % msgs.length; setLoadingMessage(msgs[i]); }, 3000);
 
-    const partyBrief: PartyBrief = {
-      theme: brief.theme, kidName: brief.kidName,
-      kidAge: parseInt(brief.kidAge), guestsCount: parseInt(brief.guests),
-      budgetRange: brief.budget as PartyBrief["budgetRange"], language: lang,
-      ...(brief.venueType && { venueType: brief.venueType }),
-      ...(brief.stylePref && { stylePref: brief.stylePref }),
-      ...(brief.genderPref && { genderPref: brief.genderPref }),
-      ...(brief.freeNotes && { freeNotes: brief.freeNotes }),
-    };
-
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brief: partyBrief, selectedItems }),
+        body: JSON.stringify({ brief: buildPartyBrief(), selectedItems }),
       });
       clearInterval(interval);
 
-      // The response can be a non-JSON body (e.g. a Vercel timeout/error page
-      // returns "FUNCTION_INVOCATION_TIMEOUT" as plain text). Reading it as text
-      // first avoids res.json() throwing a cryptic SyntaxError on the client.
       const bodyText = await res.text();
       let data: { plan?: unknown; brief?: unknown; error?: string } = {};
       try {
@@ -485,7 +251,7 @@ export function Journey() {
     }
   };
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // ─── Render: generating / items phases (unchanged behaviour) ──────────────
 
   if (phase === "generating") return <LoadingScreen message={loadingMessage} />;
 
@@ -498,7 +264,7 @@ export function Journey() {
             <>
               <p className="text-charcoal font-medium">{loadingMessage}</p>
               <button
-                onClick={() => { setPhase("brief"); setStep(4); setLoadingMessage(""); }}
+                onClick={() => { setPhase("brief"); setLoadingMessage(""); }}
                 className="px-6 py-3 bg-gold text-white rounded-2xl font-medium"
               >
                 {isHe ? "נסי שוב" : "Try again"}
@@ -525,55 +291,204 @@ export function Journey() {
     );
   }
 
-  const STEPS_HE = [
-    { q: "מה הנושא?", sub: "הכל מתחיל מהחלום ✨" },
-    { q: "מי החוגג/ת?", sub: "ספרי לנו על כוכב/ת המסיבה" },
-    { q: "כמה חברים מגיעים?", sub: "כל ילד שווה מסיבה 🎉" },
-    { q: "מה התקציב?", sub: "נתאים את הקסם לתקציב" },
-    { q: "רוצה להוסיף עוד?", sub: "אפשר לדלג — יש לנו מה שצריך" },
-  ];
-  const STEPS_EN = [
-    { q: "What's the theme?", sub: "Every great party starts with a dream ✨" },
-    { q: "Who's the birthday star?", sub: "Tell us about the guest of honor" },
-    { q: "How many guests?", sub: "The more the merrier 🎉" },
-    { q: "What's the budget?", sub: "We'll tailor the magic to fit" },
-    { q: "Want to add more details?", sub: "Feel free to skip — we have what we need" },
-  ];
-  const steps = isHe ? STEPS_HE : STEPS_EN;
+  // ─── Render: single-page brief form ───────────────────────────────────────
+
+  const themeChips = isHe ? THEMES_HE : THEMES_EN;
+  const venueChips = isHe ? VENUE_HE : VENUE_EN;
+  const styleChips = isHe ? STYLE_HE : STYLE_EN;
+
+  const containerWidth = isDesktop ? "max-w-4xl" : "max-w-lg";
 
   return (
-    <div className="relative overflow-hidden min-h-screen">
-      <AnimatePresence initial={false} custom={direction} mode="wait">
-        <motion.div
-          key={step}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={transition}
-          className="absolute inset-0"
-        >
-          <StepShell
-            step={step}
-            total={5}
-            onBack={step > 0 ? () => goTo(step - 1) : undefined}
-            question={steps[step].q}
-            subtext={steps[step].sub}
-            canContinue={canContinue}
-            onContinue={handleNext}
-            continueLabel={step === 4 ? (isHe ? "בואו נבנה! 🎉" : "Let's build! 🎉") : undefined}
-            skipLabel={step === 4 ? (isHe ? "דלגי על הפרטים הנוספים" : "Skip extra details") : undefined}
-            onSkip={step === 4 ? finishBrief : undefined}
+    <div className="min-h-screen bg-cream">
+      <div className={`${containerWidth} mx-auto px-4 sm:px-6 py-10 pb-32`}>
+        {/* Header */}
+        <header className="text-center mb-8 space-y-2">
+          <h1
+            className="text-4xl sm:text-5xl font-heading gold-shimmer"
+            style={{ fontFamily: "var(--font-playfair)" }}
           >
-            {step === 0 && <Step1Theme value={brief.theme} onChange={(v) => updateBrief("theme", v)} lang={lang} />}
-            {step === 1 && <Step2Kid name={brief.kidName} age={brief.kidAge} onName={(v) => updateBrief("kidName", v)} onAge={(v) => updateBrief("kidAge", v)} lang={lang} />}
-            {step === 2 && <Step3Guests value={brief.guests} onChange={(v) => updateBrief("guests", v)} lang={lang} />}
-            {step === 3 && <Step4Budget value={brief.budget} onChange={(v) => updateBrief("budget", v as BudgetRange)} onAutoAdvance={handleNext} lang={lang} />}
-            {step === 4 && <Step5Optional state={brief} update={updateBrief} lang={lang} />}
-          </StepShell>
-        </motion.div>
-      </AnimatePresence>
+            By Des
+          </h1>
+          <p className="text-charcoal-light text-base">
+            {isHe ? "כל הפרטים במקום אחד — בלי שלבים, בלי לחץ ✨" : "All the details in one place — no steps, no rush ✨"}
+          </p>
+        </header>
+
+        {/* Form */}
+        <div
+          className={`grid gap-4 ${
+            isDesktop ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"
+          }`}
+        >
+          {/* 1. Theme */}
+          <FieldCard
+            title={isHe ? "נושא המסיבה" : "Party theme"}
+            hint={isHe ? "בחרי מהרשימה או כתבי משלך" : "Pick a chip or type your own"}
+            required
+          >
+            <div className="flex flex-wrap gap-2 mb-3">
+              {themeChips.map((chip) => (
+                <Chip key={chip} active={brief.theme === chip} onClick={() => updateBrief("theme", chip)}>
+                  {chip}
+                </Chip>
+              ))}
+            </div>
+            <TextInput
+              type="text"
+              value={brief.theme}
+              onChange={(e) => updateBrief("theme", e.target.value)}
+              placeholder={isHe ? "לדוגמה: ג'ונגל, נסיכות, יוניקורן..." : "e.g. Jungle, Princess, Unicorn..."}
+            />
+          </FieldCard>
+
+          {/* 2. Kid name */}
+          <FieldCard title={isHe ? "שם הילד/ה" : "Child's name"} required>
+            <TextInput
+              type="text"
+              value={brief.kidName}
+              onChange={(e) => updateBrief("kidName", e.target.value)}
+              placeholder={isHe ? "השם של החוגג/ת" : "Birthday star's name"}
+            />
+          </FieldCard>
+
+          {/* 3. Age */}
+          <FieldCard title={isHe ? "גיל" : "Age"} required>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {AGE_CHIPS.map((chip) => (
+                <Chip key={chip} active={brief.kidAge === chip} onClick={() => updateBrief("kidAge", chip)}>
+                  {chip}
+                </Chip>
+              ))}
+            </div>
+            <TextInput
+              type="number"
+              min={1}
+              max={18}
+              value={brief.kidAge}
+              onChange={(e) => updateBrief("kidAge", e.target.value)}
+              placeholder={isHe ? "או הקלידי גיל אחר" : "Or type a different age"}
+            />
+          </FieldCard>
+
+          {/* 4. Guests */}
+          <FieldCard title={isHe ? "מספר אורחים" : "Number of guests"} required>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {GUEST_CHIPS.map((chip) => (
+                <Chip key={chip} active={brief.guests === chip} onClick={() => updateBrief("guests", chip)}>
+                  {chip}
+                </Chip>
+              ))}
+            </div>
+            <TextInput
+              type="number"
+              min={1}
+              value={brief.guests}
+              onChange={(e) => updateBrief("guests", e.target.value)}
+              placeholder={isHe ? "או הקלידי מספר מדויק" : "Or type an exact number"}
+            />
+          </FieldCard>
+
+          {/* 5. Budget — spans both columns on desktop so the 4 cards breathe */}
+          <div className={isDesktop ? "md:col-span-2" : ""}>
+            <FieldCard title={isHe ? "תקציב" : "Budget"} required>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {BUDGET_OPTIONS.map((opt) => {
+                  const active = brief.budget === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => updateBrief("budget", opt.id)}
+                      className={`flex flex-col items-center gap-1 py-5 px-3 rounded-2xl border-2 transition-all duration-200
+                        ${active
+                          ? "border-gold bg-gold/10 scale-[1.02] shadow-md shadow-gold/20"
+                          : "border-border bg-white hover:border-gold/60"
+                        }`}
+                    >
+                      <span className="text-3xl">{opt.emoji}</span>
+                      <span className={`font-semibold text-base ${active ? "text-gold" : "text-charcoal"}`}>
+                        {isHe ? opt.he : opt.en}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{opt.range}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </FieldCard>
+          </div>
+
+          {/* 6. Venue */}
+          <FieldCard
+            title={isHe ? "מקום (אופציונלי)" : "Venue (optional)"}
+          >
+            <div className="flex flex-wrap gap-2">
+              {venueChips.map((chip) => (
+                <Chip
+                  key={chip}
+                  active={brief.venueType === chip}
+                  onClick={() => updateBrief("venueType", brief.venueType === chip ? "" : chip)}
+                >
+                  {chip}
+                </Chip>
+              ))}
+            </div>
+          </FieldCard>
+
+          {/* 7. Style */}
+          <FieldCard
+            title={isHe ? "סגנון (אופציונלי)" : "Style (optional)"}
+          >
+            <div className="flex flex-wrap gap-2">
+              {styleChips.map((chip) => (
+                <Chip
+                  key={chip}
+                  active={brief.stylePref === chip}
+                  onClick={() => updateBrief("stylePref", brief.stylePref === chip ? "" : chip)}
+                >
+                  {chip}
+                </Chip>
+              ))}
+            </div>
+          </FieldCard>
+
+          {/* 8. Free notes — spans both columns on desktop */}
+          <div className={isDesktop ? "md:col-span-2" : ""}>
+            <FieldCard title={isHe ? "הערות חופשיות (אופציונלי)" : "Free notes (optional)"}>
+              <textarea
+                value={brief.freeNotes}
+                onChange={(e) => updateBrief("freeNotes", e.target.value)}
+                placeholder={isHe ? "כל דבר שחשוב לדעת..." : "Anything we should know..."}
+                rows={3}
+                className="w-full px-4 py-3 rounded-2xl border-2 border-border bg-white text-charcoal
+                           placeholder:text-muted-foreground focus:outline-none focus:border-gold
+                           transition-colors resize-none"
+              />
+            </FieldCard>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-8">
+          <button
+            onClick={finishBrief}
+            disabled={!canSubmit}
+            className="w-full py-4 bg-gold text-white font-semibold rounded-2xl text-lg
+                       disabled:opacity-40 disabled:cursor-not-allowed
+                       hover:bg-gold-dark active:scale-[0.99] transition-all duration-200
+                       shadow-md shadow-gold/20"
+          >
+            {isHe ? "צרי לי תוכנית 🎉" : "Build my plan 🎉"}
+          </button>
+          {!canSubmit && (
+            <p className="text-center text-xs text-muted-foreground mt-3">
+              {isHe
+                ? "מלאי את הנושא, השם, הגיל, מספר האורחים והתקציב כדי להמשיך"
+                : "Fill theme, name, age, guests and budget to continue"}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
