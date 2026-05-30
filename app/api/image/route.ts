@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generatePartyMoodboard } from "@/lib/openai-image";
 import { PartyBrief } from "@/lib/types";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
