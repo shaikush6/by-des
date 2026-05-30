@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const imageUrl = await generatePartyMoodboard(brief);
     return NextResponse.json({ imageUrl });
   } catch (err) {
-    console.error("[image]", err instanceof Error ? err.message : err);
-    return NextResponse.json({ imageUrl: null });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[image]", msg);
+    return NextResponse.json({ imageUrl: null, _debug: msg });
   }
 }
