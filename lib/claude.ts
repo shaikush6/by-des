@@ -84,7 +84,7 @@ export async function generatePartyPlan(
     step = "api_call";
     const response = await client.chat.completions.create({
       model: "gpt-5.4",
-      max_tokens: 8192,
+      max_completion_tokens: 8192,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: systemPrompt },
