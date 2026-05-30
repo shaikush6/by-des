@@ -15,6 +15,8 @@ interface PlanSession {
   brief: PartyBrief;
 }
 
+type Tier = "basic" | "special" | "wow";
+
 export default function PlanPage() {
   const { t } = useLanguage();
   const { effective } = useView();
@@ -23,6 +25,7 @@ export default function PlanPage() {
   const [ready, setReady] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
+  const [activeTier, setActiveTier] = useState<Tier>("special");
 
   const isDesktop = effective === "desktop";
   const containerWidth = isDesktop ? "max-w-4xl" : "max-w-lg";
@@ -33,7 +36,6 @@ export default function PlanPage() {
       try {
         const parsed = JSON.parse(raw);
         setSession(parsed);
-        // Fetch image async — non-blocking
         fetch("/api/image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -66,8 +68,38 @@ export default function PlanPage() {
   }
 
   const { plan, brief } = session;
+  const activePkg = plan.packages.find((p) => p.tier === activeTier) ?? plan.packages[0];
 
-  // ─── Moodboard block ──────────────────────────────────────────────────────
+  const tierColors: Record<Tier, string> = {
+    basic:   "border-stone-300 text-stone-600 bg-stone-50",
+    special: "border-rose/60 text-rose-700 bg-rose-50",
+    wow:     "border-gold/60 text-gold-dark bg-amber-50",
+  };
+  const tierActiveColors: Record<Tier, string> = {
+    basic:   "border-stone-400 bg-stone-100 text-stone-800 font-semibold",
+    special: "border-rose text-rose-800 bg-rose/20 font-semibold",
+    wow:     "border-gold bg-gold/20 text-gold-dark font-semibold",
+  };
+
+  const TierTabs = (
+    <div className="flex gap-2 justify-center">
+      {plan.packages.map((pkg) => (
+        <button
+          key={pkg.tier}
+          onClick={() => setActiveTier(pkg.tier as Tier)}
+          className={`flex-1 border-2 rounded-xl px-3 py-2.5 text-sm transition-all
+            ${activeTier === pkg.tier
+              ? tierActiveColors[pkg.tier as Tier]
+              : `${tierColors[pkg.tier as Tier]} opacity-60 hover:opacity-90`
+            }`}
+        >
+          <div className="font-medium">{pkg.tierName}</div>
+          <div className="text-xs opacity-70 mt-0.5">{pkg.estimatedCost}</div>
+        </button>
+      ))}
+    </div>
+  );
+
   const Moodboard = (
     <div className="rounded-3xl overflow-hidden shadow-lg shadow-charcoal/10 bg-muted aspect-square">
       {imageLoading ? (
@@ -89,9 +121,8 @@ export default function PlanPage() {
     </div>
   );
 
-  // ─── Plan header block ────────────────────────────────────────────────────
   const PlanHeader = (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="text-center space-y-1">
         <h2 className="font-heading text-3xl text-charcoal">{plan.theme}</h2>
         <p className="text-muted-foreground text-sm">
@@ -107,15 +138,6 @@ export default function PlanPage() {
           {t("plan.new_plan")}
         </button>
       </div>
-    </div>
-  );
-
-  // ─── Packages list ────────────────────────────────────────────────────────
-  const Packages = (
-    <div className="space-y-4">
-      {plan.packages.map((pkg) => (
-        <PackageCard key={pkg.tier} pkg={pkg} isHighlighted={pkg.tier === "special"} />
-      ))}
     </div>
   );
 
@@ -135,20 +157,22 @@ export default function PlanPage() {
 
       <main className={`${containerWidth} mx-auto px-4 py-6 pb-20`}>
         {isDesktop ? (
-          // Desktop: 2-column layout — moodboard + header sticky on the left, packages on the right
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-6 md:sticky md:top-20">
+            <div className="space-y-5 md:sticky md:top-20">
               {Moodboard}
               {PlanHeader}
+              {TierTabs}
             </div>
-            <div>{Packages}</div>
+            <div>
+              <PackageCard key={activeTier} pkg={activePkg} isHighlighted={activeTier === "special"} />
+            </div>
           </div>
         ) : (
-          // Mobile: single column, original layout
-          <div className="space-y-6">
+          <div className="space-y-5">
             {Moodboard}
             {PlanHeader}
-            {Packages}
+            {TierTabs}
+            <PackageCard key={activeTier} pkg={activePkg} isHighlighted={activeTier === "special"} />
           </div>
         )}
       </main>

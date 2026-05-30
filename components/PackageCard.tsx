@@ -36,12 +36,14 @@ function Section({
   icon,
   title,
   children,
+  defaultOpen = false,
 }: {
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className="border border-border/50 rounded-xl overflow-hidden">
@@ -99,7 +101,7 @@ export function PackageCard({ pkg, isHighlighted = false }: PackageCardProps) {
       <div className="px-4 pb-5 space-y-3">
         {/* Decor */}
         {pkg.sections.decor.items.length > 0 && (
-          <Section icon={<Sparkles size={14} />} title={t("plan.decor")}>
+          <Section icon={<Sparkles size={14} />} title={t("plan.decor")} defaultOpen={true}>
             <ul className="space-y-4">
               {pkg.sections.decor.items.map((item, i) => (
                 <li key={i} className="border-b border-border/40 last:border-0 pb-3 last:pb-0">
