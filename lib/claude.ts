@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
 import { PartyBrief, GeneratedPlan, PartyItem } from "./types";
 
 function getClient() {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
 const budgetLabels: Record<string, string> = {
@@ -18,9 +18,9 @@ export async function generatePartyPlan(
   selectedItems: PartyItem[]
 ): Promise<GeneratedPlan> {
   const isHebrew = brief.language === "he";
-  const tierBasic  = isHebrew ? "בסיסי"  : "Basic";
-  const tierMid    = isHebrew ? "מיוחד"  : "Special";
-  const tierTop    = isHebrew ? "WOW"    : "WOW";
+  const tierBasic = isHebrew ? "בסיסי" : "Basic";
+  const tierMid   = isHebrew ? "מיוחד" : "Special";
+  const tierTop   = isHebrew ? "WOW"   : "WOW";
 
   const itemList = selectedItems
     .map((i) => `${i.emoji} ${i.nameHe} / ${i.nameEn}`)
@@ -42,42 +42,39 @@ export async function generatePartyPlan(
     "7. Return ONLY valid JSON — no markdown fences, no text outside the JSON object",
   ].join("\n");
 
+  const sectionShape = {
+    decor: { items: [{ name: "string", description: "string", amazonSearchTerm: "string", aliexpressSearchTerm: "string", estimatedPrice: "string" }] },
+    cake: { style: "string", description: "string", localSearchSuggestion: "string" },
+    activities: [{ name: "string", description: "string", estimatedCost: "string" }],
+    shopping: { localStores: ["string"], onlineLinks: ["string"] },
+    designElements: [{ name: "string", description: "string", tip: "string" }],
+  };
+
+  const schema = {
+    theme: "string",
+    kidName: "string",
+    packages: [
+      { tier: "basic",   tierName: tierBasic, tagline: "string", estimatedCost: "string", desTouchNote: "string", sections: sectionShape },
+      { tier: "special", tierName: tierMid,   tagline: "string", estimatedCost: "string", desTouchNote: "string", sections: sectionShape },
+      { tier: "wow",     tierName: tierTop,   tagline: "string", estimatedCost: "string", desTouchNote: "string", sections: sectionShape },
+    ],
+  };
+
   const userPrompt = [
     "Party brief:",
     `Theme: ${brief.theme}`,
     `Child: ${brief.kidName}, age ${brief.kidAge}`,
     `Guests: ${brief.guestsCount}`,
     `Budget: ${budgetLabels[brief.budgetRange] ?? brief.budgetRange}`,
-    brief.venueType  ? `Venue: ${brief.venueType}`  : "",
-    brief.stylePref  ? `Style: ${brief.stylePref}`  : "",
-    brief.freeNotes  ? `Notes: ${brief.freeNotes}`  : "",
+    brief.venueType ? `Venue: ${brief.venueType}` : "",
+    brief.stylePref ? `Style: ${brief.stylePref}` : "",
+    brief.freeNotes ? `Notes: ${brief.freeNotes}` : "",
     "",
     "Selected items:",
     itemList,
     "",
     "Return this JSON structure (fill in all string values, keep the keys exactly):",
-    JSON.stringify({
-      theme: "string",
-      kidName: "string",
-      packages: [
-        {
-          tier: "basic",
-          tierName: tierBasic,
-          tagline: "string",
-          estimatedCost: "string",
-          desTouchNote: "string",
-          sections: {
-            decor: { items: [{ name: "string", description: "string", amazonSearchTerm: "string", aliexpressSearchTerm: "string", estimatedPrice: "string" }] },
-            cake: { style: "string", description: "string", localSearchSuggestion: "string" },
-            activities: [{ name: "string", description: "string", estimatedCost: "string" }],
-            shopping: { localStores: ["string"], onlineLinks: ["string"] },
-            designElements: [{ name: "string", description: "string", tip: "string" }],
-          },
-        },
-        { tier: "special", tierName: tierMid, tagline: "string", estimatedCost: "string", desTouchNote: "string", sections: "same structure as basic" },
-        { tier: "wow",     tierName: tierTop, tagline: "string", estimatedCost: "string", desTouchNote: "string", sections: "same structure as basic" },
-      ],
-    }, null, 2),
+    JSON.stringify(schema, null, 2),
   ].filter(Boolean).join("\n");
 
   let step = "client_init";
@@ -85,27 +82,24 @@ export async function generatePartyPlan(
     const client = getClient();
 
     step = "api_call";
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+    const response = await client.chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 8192,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userPrompt }],
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userPrompt },
+      ],
     });
 
     step = "extract_text";
-    const raw = (message.content[0] as { type: string; text: string }).text.trim();
-
-    step = "find_json";
-    const start = raw.indexOf("{");
-    const end   = raw.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error(`No JSON object found. Response starts: ${raw.slice(0, 120)}`);
+    const raw = (response.choices[0].message.content ?? "").trim();
 
     step = "parse_json";
-    const jsonSlice = raw.slice(start, end + 1);
     try {
-      return JSON.parse(jsonSlice) as GeneratedPlan;
+      return JSON.parse(raw) as GeneratedPlan;
     } catch {
-      return JSON.parse(jsonrepair(jsonSlice)) as GeneratedPlan;
+      return JSON.parse(jsonrepair(raw)) as GeneratedPlan;
     }
 
   } catch (err) {
